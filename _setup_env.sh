@@ -106,6 +106,8 @@ export MODULES_ARCHIVE=modules.tar.gz
 
 export TZ=UTC
 export LC_ALL=C
+# Match the stock nezha kernel banner (OS3.0.337.0): Tue Apr  7 18:37:45 UTC 2026
+export SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-1775587065}"
 if [ -z "${SOURCE_DATE_EPOCH}" ]; then
   if [[ -n "${KLEAF_SOURCE_DATE_EPOCHS}" ]]; then
     export SOURCE_DATE_EPOCH=$(extract_git_metadata "${KLEAF_SOURCE_DATE_EPOCHS}" "${KERNEL_DIR}" SOURCE_DATE_EPOCH)
@@ -122,7 +124,7 @@ if [ -z "${SOURCE_DATE_EPOCH}" ]; then
 fi
 export KBUILD_BUILD_TIMESTAMP="$(date -d @${SOURCE_DATE_EPOCH})"
 export KBUILD_BUILD_HOST=build-host
-export KBUILD_BUILD_USER=build-user
+export KBUILD_BUILD_USER=kleaf
 export KBUILD_BUILD_VERSION=1
 export KBUILD_GENDWARFKSYMS_STABLE=1
 
