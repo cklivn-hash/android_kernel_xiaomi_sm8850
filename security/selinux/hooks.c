@@ -110,6 +110,10 @@
 #define SELINUX_INODE_INIT_XATTRS 1
 
 struct selinux_state selinux_state;
+#ifdef CONFIG_KSU_SUSFS
+extern bool ksu_selinux_hide_running __read_mostly;
+extern int my_setprocattr(const char *name, void *value, size_t size);
+#endif // #ifdef CONFIG_KSU_SUSFS
 
 /*
  * ANDROID: selinux_state is part of the KMI, and backporting capabilities into
@@ -6623,6 +6627,17 @@ static int selinux_setprocattr(const char *name, void *value, size_t size)
 	return -EINVAL;
 }
 
+#ifdef CONFIG_KSU_SUSFS
+static int handle_selinux_setprocattr(const char *name, void *value, size_t size)
+{
+	if ((likely(!strcmp(name, "current") &&
+				current_uid().val >= 10000 &&
+				ksu_selinux_hide_running)))
+		return my_setprocattr(name, value, size);
+	return selinux_setprocattr(name, value, size);
+}
+#endif // #ifdef CONFIG_KSU_SUSFS
+
 static int selinux_ismaclabel(const char *name)
 {
 	return (strcmp(name, XATTR_SELINUX_SUFFIX) == 0);
@@ -7253,8 +7268,11 @@ static struct security_hook_list selinux_hooks[] __ro_after_init = {
 	LSM_HOOK_INIT(getselfattr, selinux_getselfattr),
 	LSM_HOOK_INIT(setselfattr, selinux_setselfattr),
 	LSM_HOOK_INIT(getprocattr, selinux_getprocattr),
+#ifdef CONFIG_KSU_SUSFS
+	LSM_HOOK_INIT(setprocattr, handle_selinux_setprocattr),
+#else
 	LSM_HOOK_INIT(setprocattr, selinux_setprocattr),
-
+#endif // #ifdef CONFIG_KSU_SUSFS
 	LSM_HOOK_INIT(ismaclabel, selinux_ismaclabel),
 	LSM_HOOK_INIT(secctx_to_secid, selinux_secctx_to_secid),
 	LSM_HOOK_INIT(release_secctx, selinux_release_secctx),
